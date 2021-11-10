@@ -1,0 +1,7 @@
+backend/node_modules
+backend/.env
+backend/notes.sql
+backend/migrations
+backend/seeders
+backend/config/config.json
+
