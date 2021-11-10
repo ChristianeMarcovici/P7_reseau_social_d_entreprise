@@ -1,3 +1,6 @@
 node_modules
 .env
 notes.sql
+migrations
+seeders
+config.json

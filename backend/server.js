@@ -20,7 +20,7 @@ const normalizePort = (val) => {
   return false;
 };
 
-const port = normalizePort(3000);
+const port = normalizePort(8080);
 //attribue la valeur port à "port"
 app.set("port", port);
 
@@ -59,3 +59,4 @@ server.on("listening", () => {
 
 //Pour lier et ecouter les connexions sur l'hotes et le port
 server.listen(port);
+
