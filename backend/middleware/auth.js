@@ -17,6 +17,5 @@ module.exports = (req, res, next) => {
     res.status(401).json({
       error: new Error({ message: "Invalid request!" }),
     });
-    // console.log("erreur authentification");
   }
 };
