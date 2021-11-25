@@ -4,4 +4,5 @@ backend/notes.sql
 backend/migrations
 backend/seeders
 backend/config/config.json
+backend/images
 

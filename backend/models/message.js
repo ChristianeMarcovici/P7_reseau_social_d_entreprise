@@ -15,24 +15,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey:{
           allowNull: false
         }
-    }),
-    models.Message.belongsTo(models.Profil, {
-      foreignKey:{
-        allowNull: false
-      }
-  })
+    })
+  
   
   }
 };
   Message.init({
-    idUSERS: {
-     type: DataTypes.INTEGER,
-      allowNull: false 
-    },
-    idPROFILS: {
-      type:DataTypes.INTEGER,
-      allowNull: false 
-    },
     title: {
       type: DataTypes.STRING,
       allowNull: false 
@@ -43,9 +31,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     imgMsg: {
       type:DataTypes.STRING
-  }
+  },
+
+
 },
   {
+    
     sequelize,
     modelName: 'Message',
   });

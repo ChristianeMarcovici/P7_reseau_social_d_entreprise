@@ -3,9 +3,11 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const path = require("path");
 
-const database = require("./models");
+
+
 const {sequelize}= require("./models/index");
 const userRoutes = require("./routes/user");
+const messageRoutes = require("./routes/message");
 
 const app = express();
 
@@ -31,9 +33,21 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
+/*app.post('/json',(req, res)=>{
+  data = req.body;
+  res.send(data);
+});*/
+/*app.post('/form', (req, res)=>{
+  data = req.body;
+  res.send(data);
+});*/
+
 //database.sequelize.sync();
 
 app.use("/api", userRoutes);
+app.use("/api/messages", messageRoutes);
+
 
 //__dirname pointe vers images qui contient les fichiers static
 app.use('./images', express.static(path.join(__dirname, './images')));

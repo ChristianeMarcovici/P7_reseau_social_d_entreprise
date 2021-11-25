@@ -13,6 +13,7 @@ const bcrypt = require("bcrypt");
 const cryptojs = require("crypto-js");
 
 //authentification
+const jwt = require("jsonwebtoken");
 const jwtAuth = require("../middleware/jwtAuth");
 const fs = require("fs-extra");
 
@@ -25,6 +26,7 @@ exports.signup = async (req, res) => {
   const password = req.body.password;
   const username = req.body.username;
   const bio = req.body.bio;
+  const admin = req.body.admin;
 
   //on crypte l'adresse email
   /* const emailCryptojs = cryptojs
@@ -52,7 +54,7 @@ exports.signup = async (req, res) => {
         password: bcryptedPassword,
         username: username,
         bio: bio,
-        admin: 0,
+        admin: admin,
       });
       //si ok retourne l'identifiant nouvel utilisateur
       return res.status(201).json({ userId: newUser.id });
@@ -95,8 +97,10 @@ exports.login = async (req, res, next) => {
     } else {
       res.status(200).json({
         userId: user.id,
-        role: user.admin,
-        token: jwtAuth.generateTokenForUser(user),
+        admin: user.admin,
+        token: jwt.sign({ userId: user.id }, `${process.env.JWT_KEY_TOKEN}`, {
+          expiresIn: "10h",
+        }),
       });
     }
   } catch (error) {
@@ -137,8 +141,7 @@ Project.findAll({
 */
 
 exports.getOneUser = async (req, res) => {
-  const headerAuth = req.headers["authorization"];
-  const userId = jwtAuth.getUserId(headerAuth);
+  const userId = req.params.id;
 
   if (userId < 0) {
     return res.status(400).json({ error: "wrong token" });
@@ -156,8 +159,7 @@ exports.getOneUser = async (req, res) => {
 
 ///////////////////////////////////////////////////////////////////////
 exports.getAllUsers = async (req, res) => {
-  const headerAuth = req.headers["authorization"];
-  const userId = jwtAuth.getUserId(headerAuth);
+  const userId = req.params.id;
 
   if (userId < 0) {
     return res.status(400).json({ error: "wrong token" });
@@ -179,6 +181,9 @@ exports.getAllUsers = async (req, res) => {
 exports.updateProfil = async (req, res) => {
   const headerAuth = req.headers["authorization"];
   const userId = jwtAuth.getUserId(headerAuth);
+  const userProfil = req.params.id;
+  console.log("userId");
+  console.log(userId);
 
   let imgProfil;
 
@@ -187,9 +192,12 @@ exports.updateProfil = async (req, res) => {
       attributes: ["id", "username", "bio", "imgProfil"],
       where: { id: userId },
     });
+
     console.log(user.imgProfil);
     console.log(userId.imgProfil);
-    if (userId === user.id) {
+    if (userId == userProfil || user.admin == 1) {
+      console.log("userId");
+      console.log(userId);
       if (req.file && user.imgProfil) {
         imgProfil = `${req.protocol}://${req.get("host")}/api/images/${
           req.file.filename
@@ -237,23 +245,33 @@ exports.updateProfil = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   const headerAuth = req.headers["authorization"];
   const userId = jwtAuth.getUserId(headerAuth);
+  const userProfil = req.params.id;
+  console.log("decodé : userId");
+  console.log(userId);
+  console.log("Params : Id");
+  console.log(userProfil);
 
   try {
     const user = await User.findOne({
       where: { id: userId },
     });
 
-    if (user.imgProfil !== null) {
-      const filename = user.imgProfil.split("/images/")[1];
-      fs.unlink(`images/${filename}`, () => {
-        User.destroy({ where: { id: userId } });
+    if (userId == userProfil || user.admin == 1) {
+      if (user.imgProfil !== null) {
+        const filename = user.imgProfil.split("/images/")[1];
+        fs.unlink(`images/${filename}`, () => {
+          user.destroy({ where: { id: userProfil } });
+          res.status(200).json({ message: "user supprimé" });
+        });
+      } else {
+        user.destroy({ where: { id: userProfil } });
         res.status(200).json({ message: "user supprimé" });
-      });
+      }
     } else {
-      User.destroy({ where: { id: userId } });
-      res.status(200).json({ message: "user supprimé" });
+      return res.status(400).json({ message: "non authorisé" });
     }
   } catch (error) {
     return res.status(500).json({ error: error });
   }
 };
+///////////////////////////////////////////////////////////////
