@@ -5,14 +5,9 @@ const jwtAuth = require("../middleware/jwtAuth");
 
 /////////////////////CREATE/////////////////////////////////////////
 exports.createMessage = async (req, res) => {
-  const userId = req.body.UserId;
+  const userId = jwtAuth.getUserId(req.headers["authorization"]);
   const title = req.body.title;
   const msg = req.body.msg;
-  console.log("userId dans controller");
-  console.log(userId);
-  console.log("body dans controller");
-  console.log(req.body);
-
   let imgMsg = "";
 
   if (title == null || msg == null) {
@@ -24,20 +19,22 @@ exports.createMessage = async (req, res) => {
   }
 
   try {
-    const users = await models.User.findOne({
+    const user = await models.User.findOne({
       where: { id: userId },
     });
-    if (users) {
+    if (user) {
       if (req.file) {
         imgMsg = `${req.protocol}://${req.get("host")}/images/${
           req.file.filename
         }`;
+      } else {
+        imgMsg = null;
       }
       const messages = await models.Message.create({
         title: title,
         msg: msg,
         imgMsg: imgMsg,
-        UserId: users.id,
+        UserId: user.id,
       });
       const newMessage = await messages.save({
         field: ["title", "msg", "imgMsg", "UserId"],
@@ -78,7 +75,7 @@ exports.getAllMessages = async (req, res, next) => {
     if (allMsg) {
       res.status(200).json(allMsg);
     } else {
-      res.status(404).json({ error: "valeur null" });
+      return res.status(404).json({ error: "valeur null" });
     }
   } catch (error) {
     return res.status(500).json({ error: error });
@@ -88,29 +85,25 @@ exports.getAllMessages = async (req, res, next) => {
 //////////////////GET ONE ////////////////////////////////////
 exports.getOneMessage = async (req, res) => {
   const userId = req.params.id;
-  console.log("userId");
-  console.log(userId);
+  let msg;
 
   try {
-    const msg = await models.Message.findOne({
+    msg = await models.Message.findOne({
       where: { id: userId },
     });
-    res.status(200).json(msg);
   } catch (error) {
     return res.status(500).json({ error: error });
   }
+  res.status(200).json(msg);
 };
 //////////////////////DELETE//////////////////////////////////////////
 exports.deleteMessage = async (req, res) => {
-  const headerAuth = req.headers["authorization"];
-  const userId = jwtAuth.getUserId(headerAuth);
-  console.log("decodé : userId");
-  console.log(userId);
+  const userId = jwtAuth.getUserId(req.headers["authorization"]);
 
   try {
     const msg = await models.Message.findOne({ where: { id: req.params.id } });
     const user = await models.User.findOne({ where: { id: userId } });
-    console.log(user.admin);
+
     if (userId == msg.UserId || user.admin == 1) {
       if (msg.imgMsg) {
         const filename = msg.imgMsg.split("/images/")[1];
@@ -123,7 +116,9 @@ exports.deleteMessage = async (req, res) => {
         res.status(200).json({ message: "msg supp" });
       }
     } else {
-      res.status(400).json({ message: "msg non autorisé à supprimé" });
+      return res
+        .status(400)
+        .json({ message: "utilisateur non autorisé à supprimé" });
     }
   } catch (error) {
     return res.status(500).json({ error: error });
@@ -131,11 +126,7 @@ exports.deleteMessage = async (req, res) => {
 };
 ///////////////////////UPDATE/////////////////////
 exports.updateMessage = async (req, res) => {
-  const headerAuth = req.headers["authorization"];
-  const userId = jwtAuth.getUserId(headerAuth);
-  console.log("decodé : userId");
-  console.log(userId);
-  console.log(req.body);
+  const userId = jwtAuth.getUserId(req.headers["authorization"]);
   let newImg;
 
   try {
@@ -145,23 +136,21 @@ exports.updateMessage = async (req, res) => {
     });
 
     if (userId == msg.UserId || user.admin == 1) {
-      if (req.file && msg.imgMsg) {
+      if (req.file) {
         newImg = `${req.protocol}://${req.get("host")}/api/images/${
           req.file.filename
         }`;
 
-        const filename = msg.imgMsg.split("/images/")[1];
-        fs.unlink(`images/${filename}`, (err) => {
-          if (err) {
-            console.log(err, "erreur ici");
-          } else {
-            console.log("image supprimé");
-          }
-        });
-      } else if (req.file) {
-        newImg = `${req.protocol}://${req.get("host")}/api/images/${
-          req.file.filename
-        }`;
+        if (msg.imgMsg) {
+          const filename = msg.imgMsg.split("/images/")[1];
+          fs.unlink(`images/${filename}`, (err) => {
+            if (err) {
+              console.log(err, "erreur ici");
+            } else {
+              console.log("image supprimé");
+            }
+          });
+        }
       }
       if (newImg) {
         msg.imgMsg = newImg;
@@ -170,7 +159,7 @@ exports.updateMessage = async (req, res) => {
         msg.msg = req.body.msg;
       }
     } else {
-      res.status(400).json({ message: "erreur d'authenfication" });
+      return res.status(400).json({ message: "erreur d'authenfication" });
     }
     const newMsg = await msg.save({
       field: ["msg", "imgMsg"],

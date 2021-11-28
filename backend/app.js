@@ -6,8 +6,10 @@ const path = require("path");
 
 
 const {sequelize}= require("./models/index");
+const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const messageRoutes = require("./routes/message");
+const talkRoutes = require("./routes/talk");
 
 const app = express();
 
@@ -44,9 +46,10 @@ app.use(express.urlencoded({ extended: true }));
 });*/
 
 //database.sequelize.sync();
-
-app.use("/api", userRoutes);
+app.use("/api/auth", authRoutes );
+app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/talks", talkRoutes);
 
 
 //__dirname pointe vers images qui contient les fichiers static

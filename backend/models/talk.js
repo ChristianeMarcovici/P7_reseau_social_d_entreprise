@@ -20,17 +20,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: {
           allowNull: false
         }
-      }),
-      models.Talk.hasOne(models.Talk, {
-        foreignKey: {
-          allowNull: false
-        }
       })
     }
   };
   Talk.init({
-    idUSERS: DataTypes.INTEGER,
-    idMESSAGES: DataTypes.INTEGER,
+    userId: DataTypes.INTEGER,
+    messageId: DataTypes.INTEGER,
     msgTalk: DataTypes.STRING,
     imgTalk: DataTypes.STRING
   }, {

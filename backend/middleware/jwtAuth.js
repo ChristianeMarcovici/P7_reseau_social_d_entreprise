@@ -23,14 +23,14 @@ function parseAuthorization(authorization) {
 function getUserId(authorization) {
   const token = parseAuthorization(authorization);
   const jwtToken = jwt.verify(token, `${process.env.JWT_KEY_TOKEN}`);
-  console.log("token");
+  console.log("token de get userid");
   console.log(token);
-  console.log("jwttoken");
+  console.log("jwttoken de get userid");
   console.log(jwtToken);
 
   if (jwtToken != null) {
     const userId = jwtToken.userId;
-    console.log("userId");
+    console.log("userId de get userid");
     console.log(userId);
     return userId;
   }
